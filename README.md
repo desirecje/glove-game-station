@@ -69,8 +69,8 @@ Each flex sensor sits in a voltage divider with a 10kΩ fixed resistor:
 |--------|------|
 | Index  | 1    |
 | Middle | 2    |
-| Ring   | 3    |
-| Pinky  | 4    |
+| Ring   | 4    |
+| Pinky  | 5    |
 
 ### MPU-6050 IMU → ESP32-S3 (XIAO)
 
@@ -78,7 +78,7 @@ Each flex sensor sits in a voltage divider with a 10kΩ fixed resistor:
 |----------|---------------|
 | VCC      | 3.3V          |
 | GND      | GND           |
-| SDA      | GPIO 5        |
+| SDA      | GPIO 7        |
 | SCL      | GPIO 6        |
 | AD0      | GND (address = 0x68) |
 
