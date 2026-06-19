@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glove Game Station</title>
+<style>
+/* ── Reset & base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d0d14;
+  --surface:   #14141f;
+  --card:      #1a1a2a;
+  --border:    rgba(255,255,255,0.08);
+  --border-hi: rgba(255,255,255,0.18);
+  --accent:    #7c6ff7;
+  --accent-lo: rgba(124,111,247,0.15);
+  --green:     #22c97a;
+  --red:       #f04f4f;
+  --amber:     #f5a623;
+  --text:      #e8e8f0;
+  --muted:     #7a7a96;
+  --mono:      'JetBrains Mono', 'Fira Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Layout ──────────────────────────────────────────────────── */
+.page { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+/* ── Header ──────────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+}
+.wordmark {
+  display: flex; align-items: center; gap: 10px;
+}
+.wordmark-icon {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.wordmark-text {
+  font-size: 15px; font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.wordmark-sub {
+  font-size: 11px; color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.conn-badge {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 12px;
+  border: 0.5px solid var(--border);
+  border-radius: 99px;
+  font-size: 12px;
+  color: var(--muted);
+  transition: border-color 0.3s;
+}
+.conn-badge.live { border-color: var(--green); color: var(--green); }
+.conn-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted);
+  transition: background 0.3s;
+}
+.conn-badge.live .conn-dot {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── Live glove panel ────────────────────────────────────────── */
+.glove-panel {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+.glove-label {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+/* Roll meter */
+.roll-meter-wrap { display: flex; align-items: center; gap: 10px; }
+.roll-meter {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 99px;
+  position: relative;
+  overflow: visible;
+}
+.roll-track {
+  position: absolute;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width 0.05s, left 0.05s;
+}
+.roll-thumb {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  transition: left 0.05s;
+  box-shadow: 0 0 8px var(--accent);
+}
+.roll-center {
+  position: absolute; top: -3px;
+  left: 50%; transform: translateX(-50%);
+  width: 1px; height: 12px;
+  background: var(--border-hi);
+}
+.roll-val {
+  font-family: var(--mono);
+  font-size: 12px; color: var(--accent);
+  min-width: 48px; text-align: right;
+}
+
+/* Finger bars */
+.fingers { display: flex; gap: 8px; margin-top: 0.75rem; }
+.finger {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+}
+.finger-bar-bg {
+  width: 100%; height: 48px;
+  background: var(--border);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.finger-bar-fill {
+  position: absolute; bottom: 0; width: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: height 0.05s;
+  opacity: 0.7;
+}
+.finger-bar-fill.bent { opacity: 1; background: var(--green); }
+.finger-name {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* Clench indicator */
+.clench-col {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+}
+.clench-ring {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  transition: border-color 0.1s, box-shadow 0.1s;
+}
+.clench-ring.active {
+  border-color: var(--green);
+  box-shadow: 0 0 16px rgba(34,201,122,0.35);
+}
+.clench-label {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+/* ── Game grid ───────────────────────────────────────────────── */
+.section-title {
+  font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 2rem;
+}
+
+.game-card {
+  background: var(--card);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s, background 0.15s;
+  position: relative;
+  outline: none;
+}
+.game-card:hover {
+  border-color: var(--border-hi);
+  transform: translateY(-2px);
+}
+.game-card.selected {
+  border: 1.5px solid var(--accent);
+  background: rgba(124,111,247,0.07);
+}
+.game-card:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+
+.game-emoji {
+  font-size: 28px; margin-bottom: 10px; display: block;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+.game-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.game-tech { font-size: 11px; color: var(--muted); }
+
+.playing-chip {
+  position: absolute; top: 10px; right: 10px;
+  background: var(--accent);
+  color: #fff; font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 99px;
+  letter-spacing: 0.04em;
+  display: none;
+}
+.game-card.selected .playing-chip { display: block; }
+
+/* ── Detail panel ────────────────────────────────────────────── */
+.detail {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.detail-head {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 1.25rem;
+}
+.detail-emoji { font-size: 32px; }
+.detail-title { font-size: 18px; font-weight: 600; }
+.detail-sub { font-size: 12px; color: var(--muted); }
+
+.ctrl-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 1.25rem;
+}
+.ctrl-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.ctrl-glyph { font-size: 20px; width: 28px; text-align: center; }
+.ctrl-info { }
+.ctrl-name { font-size: 12px; font-weight: 600; }
+.ctrl-action { font-size: 11px; color: var(--muted); }
+
+.divider { height: 0.5px; background: var(--border); margin: 1.25rem 0; }
+
+.run-cmd {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--card);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--muted);
+  word-break: break-all;
+  margin-bottom: 1rem;
+}
+
+.btn-row { display: flex; gap: 8px; }
+
+.btn-launch {
+  flex: 1;
+  padding: 11px;
+  background: var(--accent);
+  color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  letter-spacing: -0.01em;
+}
+.btn-launch:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-launch:active { transform: translateY(0); }
+.btn-launch:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+.btn-recal {
+  padding: 11px 16px;
+  background: transparent;
+  border: 0.5px solid var(--border-hi);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 13px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-recal:hover { background: var(--card); color: var(--text); }
+
+/* ── Toast ───────────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--surface);
+  border: 0.5px solid var(--border-hi);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 13px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 100;
+}
+.toast.show { opacity: 1; }
+.toast.ok  { border-color: var(--green); color: var(--green); }
+.toast.err { border-color: var(--red);   color: var(--red); }
+
+/* ── Footer ──────────────────────────────────────────────────── */
+footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3rem;
+  opacity: 0.6;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header>
+    <div class="wordmark">
+      <div class="wordmark-icon">🧤</div>
+      <div>
+        <div class="wordmark-text">Glove Game Station</div>
+        <div class="wordmark-sub">ESP32-S3 · Wearable Controller</div>
+      </div>
+    </div>
+    <div class="conn-badge" id="connBadge">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connText">Connecting…</span>
+    </div>
+  </header>
+
+  <!-- Live glove visualiser -->
+  <div class="glove-panel">
+    <div>
+      <div class="glove-label">Wrist roll — steering</div>
+      <div class="roll-meter-wrap">
+        <span style="font-size:11px;color:var(--muted)">L</span>
+        <div class="roll-meter" id="rollMeter">
+          <div class="roll-center"></div>
+          <div class="roll-track" id="rollTrack"></div>
+          <div class="roll-thumb" id="rollThumb"></div>
+        </div>
+        <span style="font-size:11px;color:var(--muted)">R</span>
+        <span class="roll-val" id="rollVal">0.0°</span>
+      </div>
+
+      <div class="glove-label" style="margin-top:1rem">Finger flex — clench detection</div>
+      <div class="fingers">
+        <div class="finger">
+          <div class="finger-bar-bg"><div class="finger-bar-fill" id="barI"></div></div>
+          <div class="finger-name">Index</div>
+        </div>
+        <div class="finger">
+          <div class="finger-bar-bg"><div class="finger-bar-fill" id="barM"></div></div>
+          <div class="finger-name">Middle</div>
+        </div>
+        <div class="finger">
+          <div class="finger-bar-bg"><div class="finger-bar-fill" id="barR"></div></div>
+          <div class="finger-name">Ring</div>
+        </div>
+        <div class="finger">
+          <div class="finger-bar-bg"><div class="finger-bar-fill" id="barP"></div></div>
+          <div class="finger-name">Pinky</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="clench-col">
+      <div class="clench-ring" id="clenchRing">✊</div>
+      <div class="clench-label" id="clenchLabel">Open</div>
+    </div>
+  </div>
+
+  <!-- Game selector -->
+  <div class="section-title">Select game</div>
+  <div class="game-grid">
+    <div class="game-card selected" tabindex="0" data-id="flappy" onclick="selectGame('flappy')" onkeydown="if(event.key==='Enter')selectGame('flappy')">
+      <div class="playing-chip">Selected</div>
+      <span class="game-emoji">🐦</span>
+      <div class="game-name">Flappy Bird</div>
+      <div class="game-tech">Java · Swing</div>
+    </div>
+    <div class="game-card" tabindex="0" data-id="tetris" onclick="selectGame('tetris')" onkeydown="if(event.key==='Enter')selectGame('tetris')">
+      <div class="playing-chip">Selected</div>
+      <span class="game-emoji">🟦</span>
+      <div class="game-name">Tetris</div>
+      <div class="game-tech">Java · com.zetcode</div>
+    </div>
+    <div class="game-card" tabindex="0" data-id="racing" onclick="selectGame('racing')" onkeydown="if(event.key==='Enter')selectGame('racing')">
+      <div class="playing-chip">Selected</div>
+      <span class="game-emoji">🏎️</span>
+      <div class="game-name">Mario Kart</div>
+      <div class="game-tech">C++ · OpenGL</div>
+    </div>
+  </div>
+
+  <!-- Detail panel (filled by JS) -->
+  <div class="detail" id="detailPanel"></div>
+
+  <footer>Glove Game Station · ESP32-S3 unified firmware · ws://localhost:8765</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Game data ─────────────────────────────────────────────────────────────
+const GAMES = {
+  flappy: {
+    name: 'Flappy Bird', tech: 'Java · Swing', emoji: '🐦',
+    controls: [
+      { g: '✊', name: 'Clench fist',   action: 'Flap / jump' },
+      { g: '👋', name: 'Open fist',     action: 'Glide (do nothing)' },
+      { g: '↔️', name: 'Tilt wrist',    action: 'Ignored in this game' },
+      { g: '␣',  name: 'Space bar',     action: 'Keyboard fallback' },
+    ],
+    cmd: 'java -cp "out;lib/jSerialComm-2.11.0.jar;assets/flappybird" FlappyBird',
+    note: 'IMU tilt is ignored — only clench controls the bird.',
+  },
+  tetris: {
+    name: 'Tetris', tech: 'Java · com.zetcode', emoji: '🟦',
+    controls: [
+      { g: '↰',  name: 'Tilt left',    action: 'Move block left' },
+      { g: '↱',  name: 'Tilt right',   action: 'Move block right' },
+      { g: '✊', name: 'Clench fist',  action: 'Rotate block' },
+      { g: '⌨️', name: '← → ↑ keys',  action: 'Keyboard fallback' },
+    ],
+    cmd: 'java -cp "out;lib/jSerialComm-2.11.0.jar" com.zetcode.Tetris',
+    note: 'Calibration tutorial runs first to set per-finger thresholds.',
+  },
+  racing: {
+    name: 'Mario Kart', tech: 'C++ · OpenGL / freeglut', emoji: '🏎️',
+    controls: [
+      { g: '↰',  name: 'Tilt left',    action: 'Steer left (proportional)' },
+      { g: '↱',  name: 'Tilt right',   action: 'Steer right (proportional)' },
+      { g: '✊', name: 'Clench fist',  action: 'Accelerate (hold)' },
+      { g: '👋', name: 'Open fist',    action: 'Brake / coast' },
+    ],
+    cmd: 'MarioKart.exe  (or ./MarioKart on Mac/Linux)',
+    note: 'C++ GloveController reads the same serial line. Keyboard also works.',
+  },
+};
+
+let selectedGame = 'flappy';
+let ws = null;
+let wsReady = false;
+
+// ── WebSocket connection ──────────────────────────────────────────────────
+function connectWS() {
+  ws = new WebSocket('ws://localhost:8765');
+
+  ws.onopen = () => {
+    wsReady = true;
+    setBadge(true);
+  };
+
+  ws.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === 'glove')       updateGlove(msg);
+      if (msg.type === 'launch_result') handleLaunchResult(msg.result);
+      if (msg.type === 'recal_ack')   showToast('Recalibration sent to glove', 'ok');
+    } catch(e) {}
+  };
+
+  ws.onclose = () => {
+    wsReady = false;
+    setBadge(false);
+    // Retry every 2 s
+    setTimeout(connectWS, 2000);
+  };
+
+  ws.onerror = () => {
+    ws.close();
+  };
+}
+
+// ── Glove UI update ───────────────────────────────────────────────────────
+const ROLL_MAX = 30; // degrees = full travel on the meter
+const FLEX_MAX = 300; // delta clamp for bar height
+
+function updateGlove(d) {
+  // Connection badge
+  setBadge(d.connected);
+
+  // Roll meter
+  const ratio = Math.max(-1, Math.min(1, d.roll / ROLL_MAX));
+  const pct   = (ratio + 1) / 2 * 100; // 0-100% across meter
+  document.getElementById('rollVal').textContent = d.roll.toFixed(1) + '°';
+  document.getElementById('rollThumb').style.left = `calc(${pct}% - 7px)`;
+
+  // Track: from centre to thumb
+  const centre = 50;
+  if (ratio < 0) {
+    document.getElementById('rollTrack').style.left  = pct + '%';
+    document.getElementById('rollTrack').style.width = (centre - pct) + '%';
+  } else {
+    document.getElementById('rollTrack').style.left  = centre + '%';
+    document.getElementById('rollTrack').style.width = (pct - centre) + '%';
+  }
+
+  // Finger bars
+  [['I', d.dI], ['M', d.dM], ['R', d.dR], ['P', d.dP]].forEach(([k, v]) => {
+    const bar = document.getElementById('bar' + k);
+    const h   = Math.min(100, Math.max(0, v / FLEX_MAX * 100));
+    bar.style.height = h + '%';
+    bar.classList.toggle('bent', v > 60);
+  });
+
+  // Clench ring
+  const ring  = document.getElementById('clenchRing');
+  const label = document.getElementById('clenchLabel');
+  ring.classList.toggle('active', d.clenched);
+  label.textContent = d.clenched ? 'Clenched!' : 'Open';
+}
+
+// ── Connection badge ──────────────────────────────────────────────────────
+function setBadge(live) {
+  const badge = document.getElementById('connBadge');
+  const text  = document.getElementById('connText');
+  badge.classList.toggle('live', live);
+  text.textContent = live ? 'Glove connected · COM6' : 'No glove — keyboard only';
+}
+
+// ── Game selection ────────────────────────────────────────────────────────
+function selectGame(id) {
+  selectedGame = id;
+  document.querySelectorAll('.game-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.id === id);
+  });
+  renderDetail();
+}
+
+function renderDetail() {
+  const g = GAMES[selectedGame];
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="detail-head">
+      <div class="detail-emoji">${g.emoji}</div>
+      <div>
+        <div class="detail-title">${g.name}</div>
+        <div class="detail-sub">${g.tech}</div>
+      </div>
+    </div>
+
+    <div class="section-title">Controller mapping</div>
+    <div class="ctrl-grid">
+      ${g.controls.map(c => `
+        <div class="ctrl-item">
+          <div class="ctrl-glyph">${c.g}</div>
+          <div class="ctrl-info">
+            <div class="ctrl-name">${c.name}</div>
+            <div class="ctrl-action">${c.action}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">Run command</div>
+    <div class="run-cmd">${g.cmd}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:1rem">${g.note}</div>
+
+    <div class="btn-row">
+      <button class="btn-launch" id="launchBtn" onclick="launchGame()">
+        Launch ${g.name}
+      </button>
+      <button class="btn-recal" onclick="recalibrate()">
+        Recalibrate IMU
+      </button>
+    </div>
+  `;
+}
+
+// ── Launch game ───────────────────────────────────────────────────────────
+function launchGame() {
+  if (!wsReady) {
+    showToast('Bridge server not running — start bridge.py first', 'err');
+    return;
+  }
+  const btn = document.getElementById('launchBtn');
+  btn.disabled = true;
+  btn.textContent = 'Launching…';
+  ws.send(JSON.stringify({ type: 'launch', game: selectedGame }));
+  setTimeout(() => {
+    if (btn) { btn.disabled = false; btn.textContent = 'Launch ' + GAMES[selectedGame].name; }
+  }, 3000);
+}
+
+function handleLaunchResult(result) {
+  if (result.startsWith('launched:')) {
+    showToast('Game launched!', 'ok');
+  } else if (result.startsWith('error:')) {
+    showToast(result.replace('error:', ''), 'err');
+  }
+}
+
+function recalibrate() {
+  if (!wsReady) { showToast('Bridge server not running', 'err'); return; }
+  ws.send(JSON.stringify({ type: 'recalibrate' }));
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+renderDetail();
+connectWS();
+</script>
+</body>
+</html>

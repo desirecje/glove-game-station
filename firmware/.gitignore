@@ -1,0 +1,21 @@
+# Compiled Java output
+out/
+*.class
+
+# PlatformIO build artifacts
+firmware/.pio/
+firmware/.vscode/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# jSerialComm jar (too large for git — see README for download link)
+lib/*.jar
