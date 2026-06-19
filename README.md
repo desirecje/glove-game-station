@@ -131,24 +131,24 @@ private static final String SERIAL_PORT = "COM6";   // Windows
 
 **Windows:**
 ```cmd
-javac -cp ".;lib/jSerialComm-2.11.0.jar" src/controller/*.java src/launcher/*.java src/flappybird/*.java -d out
+javac -cp ".;lib/jSerialComm-2.10.4.jar" src/controller/*.java src/launcher/*.java src/flappybird/*.java -d out
 ```
 
 **Mac / Linux:**
 ```bash
-javac -cp ".:lib/jSerialComm-2.11.0.jar" src/controller/*.java src/launcher/*.java src/flappybird/*.java -d out
+javac -cp ".:lib/jSerialComm-2.10.4.jar" src/controller/*.java src/launcher/*.java src/flappybird/*.java -d out
 ```
 
 ### Run
 
 **Windows:**
 ```cmd
-java -cp "out;lib/jSerialComm-2.11.0.jar;assets" GameLauncher
+java -cp "out;lib/jSerialComm-2.10.4.jar;assets" GameLauncher
 ```
 
 **Mac / Linux:**
 ```bash
-java -cp "out:lib/jSerialComm-2.11.0.jar:assets" GameLauncher
+java -cp "out:lib/jSerialComm-2.10.4.jar:assets" GameLauncher
 ```
 
 ---
