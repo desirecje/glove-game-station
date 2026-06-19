@@ -68,10 +68,10 @@ For Prototype 1:
 COM6
 | Finger | GPIO |
 |--------|------|
-| Index  | 1    |
-| Middle | 2    |
-| Ring   | 4    |
-| Pinky  | 5    |
+| Index  | 4    |
+| Middle | 5    |
+| Ring   | 2    |
+| Pinky  | 1    |
 
 ### MPU-6050 IMU → ESP32-S3 (XIAO)
 
