@@ -64,7 +64,8 @@ Each flex sensor sits in a voltage divider with a 10kΩ fixed resistor:
 3.3V ── [Flex sensor] ──┬── [10kΩ] ── GND
                         └── GPIO pin (analog read)
 ```
-
+For Prototype 1:
+COM6
 | Finger | GPIO |
 |--------|------|
 | Index  | 1    |
@@ -79,6 +80,25 @@ Each flex sensor sits in a voltage divider with a 10kΩ fixed resistor:
 | VCC      | 3.3V          |
 | GND      | GND           |
 | SDA      | GPIO 7        |
+| SCL      | GPIO 6        |
+| AD0      | GND (address = 0x68) |
+
+For Prototype 2 (exo-skeleton glove):
+COM7
+| Finger | GPIO |
+|--------|------|
+| Index  | 1    |
+| Middle | 2    |
+| Ring   | 3    |
+| Pinky  | 4    |
+
+### MPU-6050 IMU → ESP32-S3 (XIAO)
+
+| MPU-6050 | XIAO ESP32-S3 |
+|----------|---------------|
+| VCC      | 3.3V          |
+| GND      | GND           |
+| SDA      | GPIO 5        |
 | SCL      | GPIO 6        |
 | AD0      | GND (address = 0x68) |
 
